@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1em;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #3a3a3a;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
+            transition: background 0.3s ease;
+        }
+
+        .gallery-item:hover::after {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 90vw;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #667eea;
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(102, 126, 234, 0.7);
+            color: white;
+            border: none;
+            font-size: 30px;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+            z-index: 1001;
+        }
+
+        .nav-btn:hover {
+            background: rgba(102, 126, 234, 1);
+        }
+
+        .prev {
+            left: 20px;
+        }
+
+        .next {
+            right: 20px;
+        }
+
+        .image-counter {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #aaa;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        footer {
+            text-align: center;
+            color: #aaa;
+            padding: 20px;
+            border-top: 1px solid #3a3a3a;
+            margin-top: 60px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
+            .nav-btn {
+                font-size: 24px;
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Photo Gallery</h1>
+            <p class="subtitle">A collection of memories</p>
+        </header>
+
+        <div class="gallery" id="gallery"></div>
+
+        <footer>
+            <p>&copy; 2026 Photo Gallery. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Modal for full-size viewing -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <img class="modal-image" id="modalImage" src="" alt="">
+            <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
+            <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
+            <div class="image-counter"><span id="currentImageNum">1</span> / <span id="totalImageNum">1</span></div>
+        </div>
+    </div>
+
+    <script>
+        const images = [
+            '20260510_094508.jpg',
+            '20260510_115634.jpg',
+            '20260510_130236.jpg',
+            '20260511_095810.jpg',
+            '20260511_103426.jpg',
+            '20260511_113015.jpg',
+            '20260511_113117.jpg',
+            '20260511_145212.jpg',
+            '20260511_213726.jpg',
+            '20260512_090902.jpg',
+            '20260512_091450.jpg',
+            '20260512_092004.jpg',
+            '20260513_075220.jpg',
+            '20260513_131725.jpg',
+            '20260513_133037.jpg',
+            '20260513_133912.jpg',
+            '20260513_173206.jpg',
+            '20260514_084435(0).jpg',
+            '20260514_111413.jpg',
+            '20260514_112615.jpg',
+            '20260514_113124.jpg',
+            '20260514_113604(0).jpg',
+            '20260514_113901.jpg',
+            '20260514_125318.jpg',
+            '20260515_093556.jpg',
+            '20260515_095113.jpg',
+            '20260515_100139.jpg',
+            '20260515_102201.jpg',
+            '20260515_102211.jpg',
+            '20260515_112516.jpg',
+            '20260515_112531.jpg',
+            '20260516_071405.jpg',
+            '20260516_071430.jpg',
+            '20260516_090817.jpg',
+            '20260516_092914.jpg',
+            '20260516_094155.jpg',
+            '20260516_102736.jpg',
+            '20260516_102755.jpg',
+            '20260516_104320.jpg',
+            '20260516_104344.jpg',
+            '20260516_110835.jpg',
+            '20260517_110552.jpg',
+            '20260517_121106.jpg',
+            '20260517_121125.jpg',
+            '20260517_131532.jpg',
+            '20260517_132008.jpg',
+            '20260517_150504.jpg'
+        ];
+
+        let currentImageIndex = 0;
+        const BASE_PATH = 'Selected/';
+
+        function initGallery() {
+            const gallery = document.getElementById('gallery');
+            images.forEach((image, index) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `<img src="${BASE_PATH}${image}" alt="Photo ${index + 1}" loading="lazy">`;
+                item.onclick = () => openModal(index);
+                gallery.appendChild(item);
+            });
+            document.getElementById('totalImageNum').textContent = images.length;
+        }
+
+        function openModal(index) {
+            currentImageIndex = index;
+            const modal = document.getElementById('modal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = BASE_PATH + images[index];
+            document.getElementById('currentImageNum').textContent = index + 1;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function changeImage(direction) {
+            currentImageIndex += direction;
+            if (currentImageIndex >= images.length) {
+                currentImageIndex = 0;
+            } else if (currentImageIndex < 0) {
+                currentImageIndex = images.length - 1;
+            }
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = BASE_PATH + images[currentImageIndex];
+            document.getElementById('currentImageNum').textContent = currentImageIndex + 1;
+        }
+
+        // Close modal when clicking the X button
+        document.querySelector('.close-btn').onclick = closeModal;
+
+        // Close modal when clicking outside the image
+        document.getElementById('modal').onclick = function(event) {
+            if (event.target === this) {
+                closeModal();
+            }
+        };
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            const modal = document.getElementById('modal');
+            if (modal.classList.contains('active')) {
+                if (event.key === 'ArrowLeft') changeImage(-1);
+                if (event.key === 'ArrowRight') changeImage(1);
+                if (event.key === 'Escape') closeModal();
+            }
+        });
+
+        // Initialize gallery on page load
+        document.addEventListener('DOMContentLoaded', initGallery);
+    </script>
+</body>
+</html>
